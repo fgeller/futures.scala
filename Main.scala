@@ -1,9 +1,9 @@
 object Main extends App {
-       new Thread() {
-         override def run(): Unit = {
-           println("hello, from elsewhere.")
-         }
-       }.start()
-       Thread.sleep(1)
-       println("hello, from runner.")
+  import scala.concurrent._
+  import ExecutionContext.Implicits._
+  val f: Future[Unit] =
+    Future { println("hello, from elsewhere.") }
+
+  Thread.sleep(1)
+  println("hello, from runner.")
 }
