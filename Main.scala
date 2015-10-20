@@ -1,10 +1,10 @@
 object Main extends App {
   import scala.util._
   def log(msg: String) = println(s"${Thread.currentThread}: $msg")
-  class Future[T]() { var value = Option.empty[Try[T]] }
-  object Future {
-    def apply[T](v: => T): Future[T] = {
-      val result = new Future[T]()
+  class Promise[T]() { var value = Option.empty[Try[T]] }
+  object Promise {
+    def apply[T](v: => T): Promise[T] = {
+      val result = new Promise[T]()
       val thread = new Thread() {
         override def run(): Unit = { result.value = Some(Try(v)) }
       }
@@ -13,8 +13,7 @@ object Main extends App {
     }
   }
   log("hello, world.")
-  val of: Future[Unit] = Future.apply(log("blubb"))
+  val of: Promise[Unit] = Promise.apply(log("blubb"))
   Thread.sleep(10)
-  log(s"our future: ${of.value}")
-  log("good bye.")
+  log(s"our promise: ${of.value}")
 }
