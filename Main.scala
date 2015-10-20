@@ -5,7 +5,8 @@ object Main extends App {
 
   val data: Seq[Int] = Seq.fill(10)(Random.nextInt)
   val partitions: Seq[Seq[Int]]  = data.grouped(2).toSeq
-  def work(is: Seq[Int]): Future[Seq[Int]] = Future(is.filter(_ >= 0))
+  def work(is: Seq[Int]): Future[Seq[Int]] =
+    Future(is.map(_ / (Random.nextInt % 2)))
   val positives: Seq[Future[Seq[Int]]] = partitions.map(work)
   val combined: Future[Seq[Seq[Int]]] = Future.sequence(positives)
   val sum: Future[Long] =
@@ -13,6 +14,7 @@ object Main extends App {
 
   sum andThen {
     case Success(ps) => println(s"Success! $ps")
+    case Failure(th) => println(s"Failure! $th")
   }
   Thread.sleep(10)
 }
