@@ -1,9 +1,20 @@
 object Main extends App {
   import scala.util._
   import scala.collection.mutable
+
   object our {
     trait Promise[T] { def complete(value: Try[T]): Promise[T] }
-    trait Future[T] { def onComplete(fun: Try[T] => Unit): Unit }
+    trait Future[T] {
+      def onComplete(fun: Try[T] => Unit): Unit
+      def map[U](fun: T => U): Future[U] = {
+        val result = new impl.Promise[U]()
+        this.onComplete {
+          case Success(v)  => result.complete(Try(fun(v)))
+          case Failure(th) => log("uhoh... not evaluating fun")
+        }
+        result.future
+      }
+    }
     object Future {
       def apply[T](v: => T): Future[T] = {
         val result = new impl.Promise[T]()
@@ -28,9 +39,11 @@ object Main extends App {
       }
     }
   }
+
   import our._
   def log(msg: String) = println(s"${Thread.currentThread}: $msg")
-  val of: Future[Unit] = Future.apply(log("blubb"))
-  of.onComplete { value => log(s"our future: ${value}") }
-  Thread.sleep(10)
+  log("hello, world.")
+  Future(21)
+    .map(value => value * 2)
+    .map(value => log(s"our future: ${value}"))
 }
