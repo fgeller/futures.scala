@@ -2,7 +2,7 @@ object Main extends App {
   def log(msg: String) = println(s"${Thread.currentThread}: $msg")
   class Future[T]() { var value: T = _ }
   object Future {
-    def apply[T](v: T): Future[T] = {
+    def apply[T](v: => T): Future[T] = {
       val result = new Future[T]()
       val thread = new Thread() {
         override def run(): Unit = { result.value = v }
