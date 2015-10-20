@@ -1,52 +1,22 @@
 object Main extends App {
   import scala.util._
-  import scala.collection.mutable
+  import scala.concurrent._
+  import ExecutionContext.Implicits._
 
-  object our {
-    trait Promise[T] { def complete(value: Try[T]): Promise[T] }
-    trait Future[T] {
-      def onComplete(fun: Try[T] => Unit): Unit
-      def map[U](fun: T => U): Future[U] = {
-        val result = new impl.Promise[U]()
-        this.onComplete {
-          case Success(v)  => result.complete(Try(fun(v)))
-          case Failure(th) => log("uhoh... not evaluating fun")
-        }
-        result.future
-      }
-    }
-    object Future {
-      def apply[T](v: => T): Future[T] = {
-        val result = new impl.Promise[T]()
-        val thread = new Thread() {
-          override def run(): Unit = { result.complete(Try(v)) }
-        }
-        thread.start()
-        result.future
-      }
-    }
+  def readFile(fn: String): Future[Map[String, Int]] =
+    Future(Map("hans" -> 21, "peter" -> 42))
+  def updateCounts(mp: Map[String, Int]): Future[Map[String, Int]] =
+    Future(mp.map({ case (n, c) => n -> (c + Random.nextInt) }).toMap)
 
-    object impl {
-      private[our] class Promise[T] extends Future[T] {
-        def future: Future[T] = this
+  val f: Future[Map[String, Int]] =
+    for {
+      oc <- readFile("stats.txt")
+      uc <- updateCounts(oc)
+    } yield uc
 
-        private var value = Option.empty[Try[T]]
-        private var onCompletes = mutable.Set.empty[Try[T] => Unit]
-        def onComplete(fun: Try[T] => Unit): Unit = { onCompletes += fun }
-        def complete(v: Try[T]): Promise[T] = {
-          this.value = Some(v)
-          this.onCompletes.foreach(_(v))
-          this
-        }
-      }
-    }
+  f andThen {
+    case Success(uc) => println(s"got updated counts: $uc")
   }
 
-  import our._
-  def log(msg: String) = println(s"${Thread.currentThread}: $msg")
-  log("hello, world.")
-  val f = Future(21)
-    .map(value => value / 0)
-    .map(value => log(s"our future: ${value}"))
-  Thread.sleep(1)
+  Thread.sleep(2)
 }
