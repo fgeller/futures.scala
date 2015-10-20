@@ -25,9 +25,11 @@ object Main extends App {
         result.future
       }
     }
+
     object impl {
       private[our] class Promise[T] extends Future[T] {
         def future: Future[T] = this
+
         private var value = Option.empty[Try[T]]
         private var onCompletes = mutable.Set.empty[Try[T] => Unit]
         def onComplete(fun: Try[T] => Unit): Unit = { onCompletes += fun }
@@ -43,7 +45,8 @@ object Main extends App {
   import our._
   def log(msg: String) = println(s"${Thread.currentThread}: $msg")
   log("hello, world.")
-  Future(21)
-    .map(value => value * 2)
+  val f = Future(21)
+    .map(value => value / 0)
     .map(value => log(s"our future: ${value}"))
+  Thread.sleep(1)
 }
