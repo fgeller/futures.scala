@@ -1,9 +1,11 @@
 object Main extends App {
-  import scala.concurrent._
-  import ExecutionContext.Implicits._
-  val f: Future[Unit] =
-    Future { println("hello, from elsewhere.") }
-
-  Thread.sleep(1)
-  println("hello, from runner.")
+  class Future[T](value: T)
+  object Future {
+    def apply[T](v: T): Future[T] = {
+      new Future(v)
+    }
+  }
+  println("hello, world.")
+  val of: Future[Unit] = Future.apply(println("blubb"))
+  println("good bye.")
 }
