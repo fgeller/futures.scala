@@ -2,31 +2,17 @@ object Main extends App {
   import scala.util._
   import scala.concurrent._
   import ExecutionContext.Implicits._
-  def log(msg: String) = println(s"${Thread.currentThread}: $msg")
 
-  def readFile(fn: String): Future[Map[String, Int]] =
-    Future {
-      log("reading file")
-      Map("hans" -> 21, "peter" -> 42)
-    }
-  def updateCounts(mp: Map[String, Int]): Future[Map[String, Int]] =
-    Future {
-      log("updating counts")
-      mp.map({ case (n, c) => n -> (c + Random.nextInt) }).toMap
-    }
+  val data: Seq[Int] = Seq.fill(10)(Random.nextInt)
+  val partitions: Seq[Seq[Int]]  = data.grouped(2).toSeq
+  def work(is: Seq[Int]): Future[Seq[Int]] = Future(is.filter(_ >= 0))
+  val positives: Seq[Future[Seq[Int]]] = partitions.map(work)
+  val combined: Future[Seq[Seq[Int]]] = Future.sequence(positives)
+  val sum: Future[Long] =
+    combined.map(iss => iss.flatten.foldLeft(0L){ (acc, i) => acc + i })
 
-  val fc: Future[Map[String, Int]] = readFile("stats.txt")
-
-  log("about to start reading")
-  val f: Future[Map[String, Int]] =
-    for {
-      oc <- fc
-      uc <- updateCounts(oc)
-    } yield uc
-
-  f andThen {
-    case Success(uc) => log(s"got updated counts: $uc")
+  sum andThen {
+    case Success(ps) => println(s"Success! $ps")
   }
-
-  Thread.sleep(1)
+  Thread.sleep(10)
 }
