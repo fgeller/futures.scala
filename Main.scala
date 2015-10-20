@@ -3,7 +3,7 @@ object Main extends App {
   import scala.collection.mutable
   object our {
     trait Promise[T] { def complete(value: Try[T]): Promise[T] }
-    trait Future[T] {}
+    trait Future[T] { def onComplete(fun: Try[T] => Unit): Unit }
     object Future {
       def apply[T](v: => T): Future[T] = {
         val result = new impl.Promise[T]()
@@ -14,22 +14,23 @@ object Main extends App {
         result.future
       }
     }
-
     object impl {
       private[our] class Promise[T] extends Future[T] {
         def future: Future[T] = this
         private var value = Option.empty[Try[T]]
+        private var onCompletes = mutable.Set.empty[Try[T] => Unit]
+        def onComplete(fun: Try[T] => Unit): Unit = { onCompletes += fun }
         def complete(v: Try[T]): Promise[T] = {
           this.value = Some(v)
+          this.onCompletes.foreach(_(v))
           this
         }
       }
     }
   }
-
   import our._
   def log(msg: String) = println(s"${Thread.currentThread}: $msg")
   val of: Future[Unit] = Future.apply(log("blubb"))
+  of.onComplete { value => log(s"our future: ${value}") }
   Thread.sleep(10)
-  log(s"our future: $of")
 }
