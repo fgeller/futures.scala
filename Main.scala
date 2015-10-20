@@ -14,6 +14,7 @@ object Main extends App {
   }
   log("hello, world.")
   val of: Future[Unit] = Future.apply(log("blubb"))
+  Thread.sleep(10)
   log(s"our future: ${of.value}")
   log("good bye.")
 }
